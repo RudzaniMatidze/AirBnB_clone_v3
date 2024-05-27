@@ -91,7 +91,7 @@ class Place(BaseModel, Base):
 
         @amenities.setter
         def amenities(self, value):
-            """Adds amenity to this Place"""
+            """Adds an amenity to this Place"""
             from models.amenity import Amenity
             if type(value) is Amenity:
                 if value.id not in self.amenity_ids:
