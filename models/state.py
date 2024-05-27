@@ -14,12 +14,16 @@ class State(BaseModel, Base):
     if models.storage_t == "db":
         __tablename__ = 'states'
         name = Column(String(128), nullable=False)
-        cities = relationship("City", backref="state")
+        cities = relationship(
+            "City",
+            cascade='all, delete, delete-orphan',
+            backref="state"
+        )
     else:
         name = ""
 
     def __init__(self, *args, **kwargs):
-        """initializes state"""
+        """Initializes state"""
         super().__init__(*args, **kwargs)
 
     if models.storage_t != "db":

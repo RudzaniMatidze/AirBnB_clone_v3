@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 """ holds class Review"""
 import models
 from models.base_model import BaseModel, Base
@@ -20,5 +20,5 @@ class Review(BaseModel, Base):
         text = ""
 
     def __init__(self, *args, **kwargs):
-        """initializes Review"""
+        """Initializes Review"""
         super().__init__(*args, **kwargs)
