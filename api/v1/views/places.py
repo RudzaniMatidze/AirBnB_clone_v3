@@ -4,6 +4,9 @@ from flask import jsonify, abort, request
 from models import storage
 from models.place import Place
 from api.v1.views import app_views
+from models.state import State
+from models.city import City
+from models.amenity import Amenity
 
 
 @app_views.route('/cities/<city_id>/places', methods=['GET'])
@@ -70,3 +73,48 @@ def delete_place(place_id):
         abort(404)
     place.delete()
     return jsonify({}), 200
+
+
+@app_views.route('/places_search', methods=['POST'], strict_slashes=False)
+def search_places():
+    """Searches for Place objects based on JSON request body"""
+    if not request.json:
+        abort(400, description="Not a JSON")
+
+    states = request.json.get('states', [])
+    cities = request.json.get('cities', [])
+    amenities = request.json.get('amenities', [])
+
+    all_places = storage.all(Place).values()
+    if not states and not cities and not amenities:
+        return jsonify([place.to_dict() for place in all_places])
+
+    place_ids = set()
+    if states:
+        for state_id in states:
+            state = storage.get(State, state_id)
+            if state:
+                for city in state.cities:
+                    place_ids.update({place.id for place in city.places})
+
+    if cities:
+        for city_id in cities:
+            city = storage.get(City, city_id)
+            if city:
+                place_ids.update({place.id for place in city.places})
+
+    if amenities:
+        places_with_amenities = set()
+        for amenity_id in amenities:
+            amenity = storage.get(Amenity, amenity_id)
+            if amenity:
+                for place in all_places:
+                    if amenity in place.amenities:
+                        places_with_amenities.add(place.id)
+        if not place_ids:
+            place_ids = places_with_amenities
+        else:
+            place_ids.intersection_update(places_with_amenities)
+
+    places = [storage.get(Place, place_id).to_dict() for place_id in place_ids]
+    return jsonify(places)
