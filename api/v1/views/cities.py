@@ -58,6 +58,7 @@ def remove_city(state_id=None, city_id=None):
                         storage.delete(place)
             storage.save()
             return jsonify({}), 200
+    A
     raise NotFound()
 
 
