@@ -69,4 +69,6 @@ def delete_review(review_id):
     if review is None:
         abort(404)
     review.delete()
-    return jsonify({}), 200
+    # Return a JSON response indicating success
+    return jsonify({'message': 'Review deleted successfully',
+                    'deleted_reviews': 1}), 200
