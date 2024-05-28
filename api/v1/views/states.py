@@ -18,7 +18,7 @@ def get_state(state_id):
     """Retrieves a State object"""
     state = storage.get(State, state_id)
     if not state:
-        abort(404)
+        abort(404, description="State not found")
     return jsonify(state.to_dict())
 
 
@@ -28,22 +28,29 @@ def delete_state(state_id):
     """Deletes a State object"""
     state = storage.get(State, state_id)
     if not state:
-        abort(404)
-    storage.delete(state)
-    storage.save()
+        abort(404, description="State not found")
+    try:
+        storage.delete(state)
+        storage.save()
+    except Exception as e:
+        abort(500, description="Internal server error: " + str(e))
     return jsonify({}), 200
 
 
 @app_views.route('/states', methods=['POST'], strict_slashes=False)
 def create_state():
     """Creates a State"""
-    if not request.json:
+    if not request.is_json:
         abort(400, description="Not a JSON")
-    if 'name' not in request.json:
+    data = request.get_json()
+    if 'name' not in data:
         abort(400, description="Missing name")
-    new_state = State(**request.json)
-    storage.new(new_state)
-    storage.save()
+    try:
+        new_state = State(**data)
+        storage.new(new_state)
+        storage.save()
+    except Exception as e:
+        abort(500, description="Internal server error: " + str(e))
     return jsonify(new_state.to_dict()), 201
 
 
@@ -52,13 +59,16 @@ def update_state(state_id):
     """Updates a State object"""
     state = storage.get(State, state_id)
     if not state:
-        abort(404)
-    if not request.json:
+        abort(404, description="State not found")
+    if not request.is_json:
         abort(400, description="Not a JSON")
-    data = request.json
+    data = request.get_json()
     ignored_keys = ['id', 'created_at', 'updated_at']
     for key, value in data.items():
         if key not in ignored_keys:
             setattr(state, key, value)
-    state.save()
+    try:
+        state.save()
+    except Exception as e:
+        abort(500, description="Internal server error: " + str(e))
     return jsonify(state.to_dict()), 200
