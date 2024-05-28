@@ -18,51 +18,61 @@ def get_amenities():
 @app_views.route('/amenities/<amenity_id>', methods=['GET'],
                  strict_slashes=False)
 def get_amenity(amenity_id):
-    """Retrieves a Amenity object"""
+    """Retrieves an Amenity object"""
     amenity = storage.get(Amenity, amenity_id)
     if not amenity:
-        abort(404)
+        abort(404, description="Amenity not found")
     return jsonify(amenity.to_dict())
 
 
 @app_views.route('/amenities/<amenity_id>', methods=['DELETE'],
                  strict_slashes=False)
 def delete_amenity(amenity_id):
-    """Deletes a Amenity object"""
+    """Deletes an Amenity object"""
     amenity = storage.get(Amenity, amenity_id)
     if not amenity:
-        abort(404)
-    storage.delete(amenity)
-    storage.save()
+        abort(404, description="Amenity not found")
+    try:
+        storage.delete(amenity)
+        storage.save()
+    except Exception as e:
+        abort(500, description="Internal server error: " + str(e))
     return jsonify({}), 200
 
 
 @app_views.route('/amenities', methods=['POST'], strict_slashes=False)
 def create_amenity():
     """Creates an Amenity"""
-    if not request.json:
+    if not request.is_json:
         abort(400, description="Not a JSON")
-    if 'name' not in request.json:
-        abort(400, description="Missing name")
     data = request.get_json()
-    amenity = Amenity(**data)
-    amenity.save()
+    if 'name' not in data:
+        abort(400, description="Missing name")
+    try:
+        amenity = Amenity(**data)
+        storage.new(amenity)
+        storage.save()
+    except Exception as e:
+        abort(500, description="Internal server error: " + str(e))
     return jsonify(amenity.to_dict()), 201
 
 
 @app_views.route('/amenities/<amenity_id>', methods=['PUT'],
                  strict_slashes=False)
 def update_amenity(amenity_id):
-    """Updates a Amenity object"""
+    """Updates an Amenity object"""
     amenity = storage.get(Amenity, amenity_id)
     if not amenity:
-        abort(404)
-    if not request.json:
+        abort(404, description="Amenity not found")
+    if not request.is_json:
         abort(400, description="Not a JSON")
     data = request.get_json()
     ignore_keys = ['id', 'created_at', 'updated_at']
     for key, value in data.items():
         if key not in ignore_keys:
             setattr(amenity, key, value)
-    amenity.save()
+    try:
+        amenity.save()
+    except Exception as e:
+        abort(500, description="Internal server error: " + str(e))
     return jsonify(amenity.to_dict()), 200
